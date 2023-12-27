@@ -7,6 +7,24 @@ provider "google" {
 
 # -- Resources --
 
+# Local Private Keys
+resource "tls_private_key" "local_keys" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_file" "public_key" {
+  content     = tls_private_key.local_keys.public_key_openssh
+  filename    = "${path.module}/ssh_keys/id_rsa.pub"
+  file_permission = "0644"
+}
+
+resource "local_file" "private_key" {
+  content     = tls_private_key.local_keys.private_key_pem
+  filename    = "${path.module}/ssh_keys/id_rsa"
+  file_permission = "0600"
+}
+
 # Virtual Network with custom subnet
 resource "google_compute_network" "vpc_network" {
   name                    = "information-system-network"
@@ -51,12 +69,18 @@ resource "google_compute_instance" "debian-vault" {
   name         = "debian-vault"
   machine_type = "e2-micro"
   tags         = ["information-system", "vm", "vault"]
+  depends_on = [local_file.public_key, local_file.private_key]
+
+  metadata = {
+    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+  }
 
   boot_disk {
     initialize_params {
       image = "projects/debian-cloud/global/images/debian-10-buster-v20231115"
     }
   }
+  
 
   network_interface {
     network    = google_compute_network.vpc_network.name
@@ -72,6 +96,11 @@ resource "google_compute_instance" "centos-workstation" {
   name         = "centos-workstation"
   machine_type = "e2-micro"
   tags         = ["information-system", "vm", "workstation"]
+  depends_on = [local_file.public_key, local_file.private_key]
+
+  metadata = {
+    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+  }
 
   boot_disk {
     initialize_params {
@@ -94,6 +123,11 @@ resource "google_compute_instance" "fedora-server-ldap" {
   name         = "fedora-server-ldap"
   machine_type = "e2-micro"
   tags         = ["information-system", "vm", "ldap"]
+  depends_on = [local_file.public_key, local_file.private_key]
+
+  metadata = {
+    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+  }
 
   boot_disk {
     initialize_params {
@@ -116,6 +150,11 @@ resource "google_compute_instance" "windows-datacenter-workstation" {
   name         = "windows-datacenter-workstation"
   machine_type = "e2-medium"
   tags         = ["information-system", "vm", "workstation"]
+  depends_on = [local_file.public_key, local_file.private_key]
+
+  metadata = {
+    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+  }
 
   boot_disk {
     initialize_params {
