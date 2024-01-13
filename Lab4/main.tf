@@ -57,7 +57,7 @@ resource "google_compute_firewall" "allow_icmp_ssh" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22"]
+    ports    = ["22","3389"]
   }
 
   source_ranges = ["0.0.0.0/0"]  # Allow from any IP, modify as needed for security
@@ -67,13 +67,14 @@ resource "google_compute_firewall" "allow_icmp_ssh" {
 # Virtual Machine Instances with Static IP
 resource "google_compute_instance" "debian-vault" {
   name         = "debian-vault"
-  machine_type = "e2-micro"
+  machine_type = "e2-medium"
   tags         = ["information-system", "vm", "vault"]
   depends_on = [local_file.public_key, local_file.private_key]
 
   metadata = {
-    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+    ssh-keys = "eduardo_mmd_correia:${tls_private_key.local_keys.public_key_openssh}"
   }
+
 
   boot_disk {
     initialize_params {
@@ -99,7 +100,7 @@ resource "google_compute_instance" "centos-workstation" {
   depends_on = [local_file.public_key, local_file.private_key]
 
   metadata = {
-    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+    ssh-keys = "eduardo_mmd_correia:${tls_private_key.local_keys.public_key_openssh}"
   }
 
   boot_disk {
@@ -126,8 +127,9 @@ resource "google_compute_instance" "fedora-server-ldap" {
   depends_on = [local_file.public_key, local_file.private_key]
 
   metadata = {
-    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+    ssh-keys = "eduardo_mmd_correia:${tls_private_key.local_keys.public_key_openssh}"
   }
+
 
   boot_disk {
     initialize_params {
@@ -153,8 +155,14 @@ resource "google_compute_instance" "windows-datacenter-workstation" {
   depends_on = [local_file.public_key, local_file.private_key]
 
   metadata = {
-    ssh-keys = "root:${tls_private_key.local_keys.public_key_openssh}"
+    windows-startup-script-ps1 = <<EOF
+    net user /add eduardo_mmd_correia
+    net user eduardo_mmd_correia admin
+    net localgroup Administrators eduardo_mmd_correia /add
+    EOF
+    ssh-keys = "eduardo_mmd_correia:${tls_private_key.local_keys.public_key_openssh}"
   }
+
 
   boot_disk {
     initialize_params {

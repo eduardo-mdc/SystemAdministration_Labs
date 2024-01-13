@@ -1,0 +1,1 @@
+xfreerdp /v:34.163.136.107 /u:eduardo_mmd_correia /size:1920x1080

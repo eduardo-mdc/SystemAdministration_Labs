@@ -1,0 +1,52 @@
+- hosts: fedora-server-ldap
+  become: yes
+  tasks:
+    - name: Install LDAP packages
+      dnf:
+        name:
+          - openldap
+          - openldap-servers
+          - openldap-clients
+        state: present
+
+    - name: Start and enable LDAP service
+      systemd:
+        name: slapd
+        enabled: yes
+        state: started
+
+- hosts: debian-vault
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install necessary dependencies for OpenMediaVault
+      apt:
+        name:
+          - gnupg
+          - software-properties-common
+          - dirmngr
+          - postfix
+        state: present
+
+    - name: Add OpenMediaVault repository key
+      apt_key:
+        url: "https://packages.openmediavault.org/public/archive.key"
+        state: present
+
+    - name: Add OpenMediaVault repository
+      apt_repository:
+        repo: "deb https://packages.openmediavault.org/public usul main"
+        state: present
+        update_cache: yes
+
+    - name: Install OpenMediaVault
+      apt:
+        name: openmediavault
+        state: present
+        update_cache: yes
+
+    - name: Run the OpenMediaVault install script
+      shell: omv-initsystem
